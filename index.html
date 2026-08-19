@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Los 28 de Carmen! - El Juego de Cumpleaños</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Montserrat & Dancing Script -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            100: '#fef9c3',
+                            300: '#fde047',
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        },
+                        party: {
+                            pink: '#ff2a85',
+                            purple: '#7e22ce',
+                            deep: '#0f051d',
+                            accent: '#ff007f'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        cursive: ['Dancing Script', 'cursive'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                        'sparkle': 'sparkle 1.5s infinite ease-in-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '50%': { transform: 'translateY(-15px) rotate(3deg)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(250, 204, 21, 0.4)' },
+                            '50%': { boxShadow: '0 0 30px rgba(250, 204, 21, 0.8)' },
+                        },
+                        sparkle: {
+                            '0%, 100%': { opacity: 0.3, transform: 'scale(0.8)' },
+                            '50%': { opacity: 1, transform: 'scale(1.2)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f051d;
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(255, 42, 133, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(126, 34, 206, 0.2) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(250, 204, 21, 0.08) 0px, transparent 60%);
+            background-attachment: fixed;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fff 0%, #facc15 50%, #ca8a04 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gold-card-border {
+            border: 2px solid rgba(250, 204, 21, 0.3);
+            background: rgba(24, 9, 43, 0.7);
+            backdrop-filter: blur(12px);
+        }
+
+        /* Floating Balloon styles */
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            opacity: 0.7;
+            animation: floatUp 15s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+            100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f051d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #7e22ce;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #facc15;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans justify-between relative selection:bg-party-pink selection:text-white">
+
+    <div id="balloonContainer" class="fixed inset-0 overflow-hidden pointer-events-none z-0"></div>
+
+    <header class="relative z-10 w-full py-4 px-6 border-b border-purple-900/40 bg-party-deep/80 backdrop-blur-md sticky top-0">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl">🎉</span>
+                <span class="font-cursive text-2xl md:text-3xl font-bold text-amber-300">Carmen's 28th</span>
+            </div>
+            <div class="flex items-center space-x-2 md:space-x-4">
+                <button onclick="toggleAudio()" id="audioBtn" class="p-2 px-3 rounded-full bg-purple-900/50 hover:bg-purple-800 text-amber-300 border border-purple-500/30 text-xs md:text-sm flex items-center gap-2 transition">
+                    <i class="fa-solid fa-music"></i> <span class="hidden md:inline">Efectos Sonoros</span>
+                </button>
+                <button onclick="enableAdminPreview()" title="Probar el Trivial sin esperar a la fecha" class="p-2 px-3 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs md:text-sm flex items-center gap-2 transition">
+                    <i class="fa-solid fa-flask"></i> <span class="hidden md:inline">Vista Previa (Dev)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="relative z-10 flex-grow max-w-5xl mx-auto w-full px-4 py-8 flex flex-col items-center justify-center">
+
+        <!-- LANDING SCREEN (COUNTDOWN & INSTRUCTIONS) -->
+        <section id="landingScreen" class="w-full text-center space-y-8 my-auto transition-all duration-500">
+            
+            <!-- Hero Title Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-amber-500/20 border border-amber-400/30 text-amber-300 text-sm font-semibold tracking-wider uppercase animate-bounce">
+                <i class="fa-solid fa-crown text-amber-400"></i> Edición Especial 28º Aniversario <i class="fa-solid fa-crown text-amber-400"></i>
+            </div>
+
+            <div class="space-y-3">
+                <h1 class="text-4xl md:text-6xl font-black tracking-tight leading-tight">
+                    <span class="block text-white">¡Bienvenida al Juego de tus</span>
+                    <span class="gold-gradient-text text-5xl md:text-7xl font-extrabold uppercase drop-shadow-lg">28 Cumpleaños!</span>
+                </h1>
+                <p class="text-purple-300 text-lg md:text-xl max-w-2xl mx-auto font-light">
+                    Un viaje inolvidable por los momentos más memorables de tu última década.
+                </p>
+            </div>
+
+            <div class="max-w-3xl mx-auto gold-card-border rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden group">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="flex items-center justify-center gap-2 mb-6">
+                    <i class="fa-solid fa-clock text-amber-400 text-xl animate-spin" style="animation-duration: 10s;"></i>
+                    <h2 class="text-lg md:text-xl font-bold uppercase tracking-widest text-amber-200">
+                        El reto comienza en:
+                    </h2>
+                </div>
+
+                <!-- Timer Grid -->
+                <div class="grid grid-cols-4 gap-2 md:gap-6 max-w-xl mx-auto">
+                    <div class="bg-purple-950/80 border border-purple-700/50 rounded-2xl p-3 md:p-4 text-center transform group-hover:scale-105 transition">
+                        <span id="timerDays" class="block text-3xl md:text-5xl font-black text-amber-400 font-mono">00</span>
+                        <span class="text-[10px] md:text-xs uppercase tracking-wider text-purple-300 font-semibold">Días</span>
+                    </div>
+                    <div class="bg-purple-950/80 border border-purple-700/50 rounded-2xl p-3 md:p-4 text-center transform group-hover:scale-105 transition">
+                        <span id="timerHours" class="block text-3xl md:text-5xl font-black text-amber-400 font-mono">00</span>
+                        <span class="text-[10px] md:text-xs uppercase tracking-wider text-purple-300 font-semibold">Horas</span>
+                    </div>
+                    <div class="bg-purple-950/80 border border-purple-700/50 rounded-2xl p-3 md:p-4 text-center transform group-hover:scale-105 transition">
+                        <span id="timerMinutes" class="block text-3xl md:text-5xl font-black text-amber-400 font-mono">00</span>
+                        <span class="text-[10px] md:text-xs uppercase tracking-wider text-purple-300 font-semibold">Minutos</span>
+                    </div>
+                    <div class="bg-purple-950/80 border border-purple-700/50 rounded-2xl p-3 md:p-4 text-center transform group-hover:scale-105 transition">
+                        <span id="timerSeconds" class="block text-3xl md:text-5xl font-black font-mono text-pink-400">00</span>
+                        <span class="text-[10px] md:text-xs uppercase tracking-wider text-purple-300 font-semibold">Segundos</span>
+                    </div>
+                </div>
+
+                <p class="text-xs text-purple-300/80 mt-4 italic">
+                    Fecha objetivo: <span class="text-amber-300 font-semibold">16 de Septiembre de 2026 - 00:00 h</span>
+                </p>
+            </div>
+
+            <div class="max-w-3xl mx-auto gold-card-border rounded-3xl p-6 md:p-8 text-left space-y-6 shadow-xl relative">
+                <div class="flex items-center gap-3 border-b border-purple-800/60 pb-4">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 font-bold text-xl">
+                        <i class="fa-solid fa-scroll"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Reglas e Instrucciones del Trivial</h3>
+                        <p class="text-xs text-purple-300">Léelo con atención antes del gran día</p>
+                    </div>
+                </div>
+
+                <!-- Verbatim explanation text requested by user -->
+                <div class="space-y-4 text-slate-200 text-sm md:text-base leading-relaxed">
+                    <p class="p-4 rounded-2xl bg-purple-900/30 border border-purple-700/30 text-amber-100 font-medium leading-relaxed">
+                        ¡Bienvenida al juego de tus <span class="text-amber-300 font-bold">28 cumpleaños</span> donde tendrás que enfrentarte a <span class="text-amber-300 font-bold">10 preguntas</span> de tus últimos 10 años! Por cada acierto obtendrás un código para abrir tu regalo.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/30 flex items-start gap-3">
+                            <i class="fa-solid fa-gem text-amber-400 text-2xl mt-1"></i>
+                            <div>
+                                <h4 class="font-bold text-amber-300 text-sm">El Código VIP Dorado</h4>
+                                <p class="text-xs text-amber-100/80 mt-1">Entre estos códigos habrá un código VIP dorado que abre el mejor regalo. Si no lo consigues, tendrás que enfrentarte a un reto para obtenerlo.</p>
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-pink-950/30 border border-pink-500/30 flex items-start gap-3">
+                            <i class="fa-solid fa-gift text-pink-400 text-2xl mt-1"></i>
+                            <div>
+                                <h4 class="font-bold text-pink-300 text-sm">¡Cuidado con los Códigos!</h4>
+                                <p class="text-xs text-pink-100/80 mt-1">No todos los códigos abren regalos, solo 5 de los 10 son válidos. ¡Así que cuanto más aciertes más probabilidades tendrás de abrir regalos!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center pt-2">
+                        <span class="inline-block px-4 py-2 rounded-xl bg-purple-950/80 border border-purple-500/40 text-amber-300 font-semibold italic text-sm md:text-base shadow-inner">
+                            ✨ ¡Paciencia y ve entrenando tu memoria que te hará falta! ✨
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Start Button (Disabled until target date or preview activated) -->
+                <div id="startBtnContainer" class="pt-4 text-center">
+                    <button id="startGameBtn" disabled onclick="startQuiz()" class="w-full md:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-lg tracking-wide uppercase shadow-lg shadow-amber-500/20 opacity-50 cursor-not-allowed transition duration-300 hover:scale-105">
+                        <i class="fa-solid fa-lock mr-2"></i> Bloqueado hasta el 16/09/2026
+                    </button>
+                    <p id="previewNotice" class="text-xs text-amber-400/80 mt-2 hidden">
+                        ⚡ Modo vista previa activado. ¡Puedes comenzar el trivial cuando quieras!
+                    </p>
+                </div>
+            </div>
+
+            <div class="max-w-3xl mx-auto bg-purple-950/40 border border-purple-800/40 rounded-3xl p-6 text-center space-y-4">
+                <div class="flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-brain text-pink-400 text-xl"></i>
+                    <h3 class="text-lg font-bold text-white">¿Quieres ir entrenando tu memoria?</h3>
+                </div>
+                <p class="text-xs text-purple-300 max-w-lg mx-auto">
+                    Juega a este minijuego de memoria para ir calentando motores mientras la cuenta atrás avanza.
+                </p>
+
+                <!-- Memory Cards Container -->
+                <div id="memoryBoard" class="grid grid-cols-4 gap-3 max-w-xs md:max-w-md mx-auto pt-2">
+                    <!-- Cards injected by JS -->
+                </div>
+                <button onclick="resetMemoryGame()" class="text-xs text-amber-400 hover:text-amber-300 underline font-medium pt-2">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Reiniciar entrenamiento
+                </button>
+            </div>
+
+        </section>
+
+        <section id="quizScreen" class="w-full max-w-3xl hidden space-y-6 my-auto">
+            
+            <!-- Quiz Progress Bar -->
+            <div class="gold-card-border rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-pink-500/20 border border-pink-500/50 flex items-center justify-center text-pink-300 font-bold">
+                        <span id="questionNum">1</span>/10
+                    </div>
+                    <div>
+                        <h4 id="yearBadge" class="text-xs text-amber-300 font-semibold tracking-wider uppercase">Año 2016 (Tu 18º Cumpleaños)</h4>
+                        <p class="text-sm text-purple-200 font-bold">Pregunta de la Década</p>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-48 bg-purple-950 rounded-full h-3 overflow-hidden border border-purple-700/50">
+                    <div id="quizProgressBar" class="bg-gradient-to-r from-pink-500 to-amber-400 h-full w-[10%] transition-all duration-300"></div>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-amber-300 font-mono font-bold bg-amber-400/10 px-3 py-1.5 rounded-xl border border-amber-400/30">
+                    <i class="fa-solid fa-key"></i> Códigos Obtenidos: <span id="codesCount">0</span>
+                </div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="gold-card-border rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl relative">
+                <h3 id="questionText" class="text-xl md:text-2xl font-bold text-white leading-relaxed">
+                    Cargando pregunta...
+                </h3>
+
+                <!-- Options Grid -->
+                <div id="optionsContainer" class="grid grid-cols-1 gap-3">
+                    <!-- Option buttons dynamically generated -->
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="feedbackBox" class="hidden p-4 rounded-2xl text-center font-bold text-sm transition-all duration-300"></div>
+            </div>
+
+        </section>
+
+        <section id="vaultScreen" class="w-full max-w-4xl hidden space-y-8 my-auto">
+            <div class="text-center space-y-3">
+                <span class="px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider">
+                    🏆 ¡Trivial Completado!
+                </span>
+                <h2 class="text-3xl md:text-5xl font-black text-white">Bóveda de Regalos de Carmen</h2>
+                <p class="text-sm md:text-base text-purple-300 max-w-xl mx-auto">
+                    Aquí están tus regalos. Recuerda: solo <span class="text-amber-300 font-bold">5 de los 10 códigos</span> abren un regalo real. ¡Introduce tus códigos obtenidos para desbloquearlos!
+                </p>
+            </div>
+
+            <!-- Obtained Codes List -->
+            <div class="gold-card-border rounded-2xl p-5 space-y-3">
+                <h4 class="text-xs uppercase font-bold tracking-wider text-amber-300 flex items-center gap-2">
+                    <i class="fa-solid fa-wallet"></i> Mis Códigos Desbloqueados en el Quiz:
+                </h4>
+                <div id="obtainedCodesList" class="flex flex-wrap gap-2">
+                    <!-- Codes pills inserted by JS -->
+                </div>
+            </div>
+
+            <!-- Gifts Grid (10 Present Boxes) -->
+            <div id="giftsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <!-- 10 gift box cards generated by JS -->
+            </div>
+
+            <!-- Manual Code Tester Input -->
+            <div class="gold-card-border rounded-2xl p-6 text-center max-w-md mx-auto space-y-4">
+                <h4 class="font-bold text-white text-sm">¿Tienes un código? Introdúcelo aquí:</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="manualCodeInput" placeholder="Ej: CARMEN-2016-8X92" class="w-full px-4 py-3 rounded-xl bg-purple-950 border border-purple-700 text-white placeholder-purple-400 text-center font-mono font-bold uppercase focus:outline-none focus:border-amber-400">
+                    <button onclick="testManualCode()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold text-sm hover:brightness-110 transition">
+                        Probar
+                    </button>
+                </div>
+                <div id="manualCodeMsg" class="text-xs font-semibold hidden"></div>
+            </div>
+
+            <div class="text-center pt-4">
+                <button onclick="restartEntireGame()" class="text-xs text-purple-400 hover:text-amber-300 underline">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Volver a empezar el Trivial
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="challengeModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="gold-card-border rounded-3xl p-6 md:p-8 max-w-lg w-full text-center space-y-6 relative animate-pulse-glow">
+            <div class="w-16 h-16 rounded-full bg-amber-400/20 border-2 border-amber-400 mx-auto flex items-center justify-center text-amber-300 text-3xl">
+                <i class="fa-solid fa-crown"></i>
+            </div>
+            
+            <div>
+                <h3 class="text-2xl font-black text-amber-300">¡RETO VIP DORADO!</h3>
+                <p class="text-xs text-purple-300 uppercase tracking-widest mt-1">El Gran Regalo te espera</p>
+            </div>
+
+            <p class="text-sm text-slate-200 leading-relaxed">
+                No conseguiste el Código VIP Dorado durante el Trivial... ¡Pero no te preocupes! Para conseguir el mejor regalo de tus 28 años sólo tienes que superar este reto especial:
+            </p>
+
+            <div class="p-4 rounded-2xl bg-amber-950/60 border border-amber-500/40 text-amber-200 font-bold text-sm md:text-base">
+                👑 "Canta a pleno pulmón el estribillo de tu canción favorita delante de todos o haz un baile de 15 segundos digno de tus 28 años."
+            </div>
+
+            <div class="flex gap-3 justify-center">
+                <button onclick="completeVipChallenge()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-bold text-sm hover:scale-105 transition shadow-lg">
+                    <i class="fa-solid fa-check mr-2"></i> ¡Reto Superado! Obtener Código VIP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="giftModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="gold-card-border rounded-3xl p-6 md:p-8 max-w-md w-full text-center space-y-6 relative">
+            <div id="giftModalIcon" class="text-6xl animate-bounce">
+                🎁
+            </div>
+            <div>
+                <span id="giftModalBadge" class="px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 text-xs font-bold uppercase">
+                    ¡Regalo Desbloqueado!
+                </span>
+                <h3 id="giftModalTitle" class="text-2xl font-black text-white mt-2">Nombre del Regalo</h3>
+            </div>
+
+            <p id="giftModalDesc" class="text-sm text-purple-200 leading-relaxed">
+                Descripción del regalo abierto.
+            </p>
+
+            <button onclick="closeGiftModal()" class="w-full py-3 rounded-xl bg-purple-800 hover:bg-purple-700 text-white font-bold text-sm transition">
+                Cerrar y continuar
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 w-full py-4 text-center text-xs text-purple-400/60 border-t border-purple-900/30 bg-party-deep/90">
+        Hecho con ❤️ para los 28 cumpleaños de Carmen | 16/09/2026
+    </footer>
+
+    <script>
+        // TARGET COUNTDOWN DATE: September 16, 2026 00:00:00
+        const TARGET_DATE = new Date('2026-09-16T00:00:00');
+        let isDevMode = false;
+        let countdownInterval;
+
+        // Web Audio API synth sounds
+        let audioCtx;
+        let isMuted = false;
+
+        // User state tracking
+        let currentQuestionIdx = 0;
+        let obtainedCodes = [];
+        let openedGifts = new Set();
+
+        // TRIVIAL QUESTIONS DATASET (10 Questions covering 10 years: 18 to 27/28)
+        // You can edit questions, options, correct index (0 to 3), and codes below!
+        const questionsData = [
+            {
+                year: "Año 2016 (Cumple 18)",
+                question: "1. ¿Qué gran hito o momento especial recuerdas de tu año de los 18?",
+                options: ["Sacarse el carnet de conducir a la primera", "El viaje inolvidable de fin de curso", "La gran fiesta de los 18", "El primer día en la universidad"],
+                correct: 0,
+                code: "CARMEN-2016-8X92", // Valid code #1
+                isVip: false
+            },
+            {
+                year: "Año 2017 (Cumple 19)",
+                question: "2. ¿A qué festival o gran evento fuiste en tu año con 19 años?",
+                options: ["Festival Indie de verano", "Concierto en el estadio", "Fiestas patronales", "Noche de musicales"],
+                correct: 1,
+                code: "FAKE-2017-991A", // Dummy code (no gift)
+                isVip: false
+            },
+            {
+                year: "Año 2018 (Cumple 20)",
+                question: "3. Cambio de década: ¿Cuál fue tu viaje o escapada más memorable con 20 años?",
+                options: ["Escapada a la playa con amigas", "Viaje por Europa", "Ruta de senderismo", "Fin de semana rural"],
+                correct: 0,
+                code: "CARMEN-2018-77B4", // Valid code #2
+                isVip: false
+            },
+            {
+                year: "Año 2019 (Cumple 21)",
+                question: "4. ¿Cuál era esa canción que no paraba de sonar en tus 21?",
+                options: ["El temazo del verano", "Un clásico del pop español", "La canción de tu grupo favorito", "El hit de reggaeton del año"],
+                correct: 2,
+                code: "FAKE-2019-3320", // Dummy code
+                isVip: false
+            },
+            {
+                year: "Año 2020 (Cumple 22)",
+                question: "5. Año 2020: ¿Qué afición o talento perfeccionaste durante el confinamiento?",
+                options: ["Repostería y recetas ricas", "Hacer ejercicio en casa", "Maratones de series infinitas", "Manualidades y pintura"],
+                correct: 0,
+                code: "CARMEN-2020-55X1", // Valid code #3
+                isVip: false
+            },
+            {
+                year: "Año 2021 (Cumple 23)",
+                question: "6. ¿Cuál fue la anécdota o fiesta más divertida que viviste a los 23?",
+                options: ["El despiste con las llaves", "La caída graciosa", "El regalo equivocado", "La fiesta temática inolvidable"],
+                correct: 3,
+                code: "FAKE-2021-0000", // Dummy code
+                isVip: false
+            },
+            {
+                year: "Año 2022 (Cumple 24)",
+                question: "7. ¿Qué logro personal o profesional celebraste con tus 24 años?",
+                options: ["Nuevo trabajo / ascenso", "Graduación y fin de estudios", "Mudanza a un nuevo piso", "Primer proyecto importante"],
+                correct: 1,
+                code: "CARMEN-2022-99P0", // Valid code #4
+                isVip: false
+            },
+            {
+                year: "Año 2023 (Cumple 25)",
+                question: "8. El ecuador de los 20: ¿Cuál era tu plan gastronómico preferido a los 25?",
+                options: ["Cena de sushi espectacular", "Hamburguesería gourmet", "La pizza artesanal perfecta", "Comida casera en familia"],
+                correct: 0,
+                code: "FAKE-2023-8812", // Dummy code
+                isVip: false
+            },
+            {
+                year: "Año 2024 (Cumple 26)",
+                question: "9. ¿Cuál de estos recuerdos refleja mejor tu año de los 26?",
+                options: ["Atardecer inolvidable en la playa", "Risas interminables en una terraza", "Un viaje improvisado de última hora", "Una noche bailando hasta el amanecer"],
+                correct: 1,
+                code: "CARMEN-2024-1234", // Valid code #5
+                isVip: false
+            },
+            {
+                year: "Año 2025 (Cumple 27)",
+                question: "10. PREGUNTA VIP: ¿Qué lema define mejor tu camino hasta los 28?",
+                options: ["'Lo mejor siempre está por llegar'", "'Coleccionando momentos, no cosas'", "'Viviendo a tope cada día'", "'28 años siendo la reina'"],
+                correct: 3,
+                code: "GOLD-VIP-2828", // THE GOLDEN VIP CODE!
+                isVip: true
+            }
+        ];
+
+        // GIFTS DATASET (5 Valid Gifts + 1 Golden VIP Gift)
+        const giftsData = {
+            "GOLD-VIP-2828": {
+                title: "👑 EL GRAN REGALO VIP DORADO",
+                desc: "¡Felicidades Carmen! Has desbloqueado el regalo estrella de tus 28 años: [AQUÍ PUEDES PONER TU REGALO PRINCIPAL: Ej. Viaje de fin de semana / Experiencia especial / Entrada de concierto].",
+                icon: "👑",
+                isVip: true
+            },
+            "CARMEN-2016-8X92": {
+                title: "🧖‍♀️ Experiencia Spa & Relax",
+                desc: "Un circuito relajante de spa con masaje incluido para desconectar.",
+                icon: "✨",
+                isVip: false
+            },
+            "CARMEN-2018-77B4": {
+                title: "🍷 Cena Romántica / Especial",
+                desc: "Una invitación a cenar en tu restaurante favorito para celebrar tus 28.",
+                icon: "🥂",
+                isVip: false
+            },
+            "CARMEN-2020-55X1": {
+                title: "✈️ Vale por una Escapada Especial",
+                desc: "Prepara la maleta para una escapada inolvidable a un lugar con encanto.",
+                icon: "🗺️",
+                isVip: false
+            },
+            "CARMEN-2022-99P0": {
+                title: "🎁 Caja Sorpresa Personalizada 28",
+                desc: "Un detalle físico personalizado pensado exclusivamente para ti.",
+                icon: "💝",
+                isVip: false
+            },
+            "CARMEN-2024-1234": {
+                title: "🍿 Noche de Cine & Cintas VIP",
+                desc: "Entradas VIP para el cine con palomitas y refresco gigante.",
+                icon: "🎬",
+                isVip: false
+            }
+        };
+
+        function updateCountdown() {
+            const now = new Date();
+            const diff = TARGET_DATE - now;
+
+            if (diff <= 0 || isDevMode) {
+                document.getElementById('timerDays').textContent = "00";
+                document.getElementById('timerHours').textContent = "00";
+                document.getElementById('timerMinutes').textContent = "00";
+                document.getElementById('timerSeconds').textContent = "00";
+
+                const btn = document.getElementById('startGameBtn');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.classList.add('hover:scale-105', 'shadow-amber-500/50');
+                btn.innerHTML = `<i class="fa-solid fa-play mr-2"></i> ¡EMPEZAR EL TRIVIAL DE TUS 28!`;
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('timerDays').textContent = String(days).padStart(2, '0');
+            document.getElementById('timerHours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('timerMinutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('timerSeconds').textContent = String(seconds).padStart(2, '0');
+        }
+
+        // Admin preview toggle
+        function enableAdminPreview() {
+            isDevMode = true;
+            document.getElementById('previewNotice').classList.remove('hidden');
+            updateCountdown();
+            playSynthBeep(880, 'sine', 0.2);
+            confetti({ particleCount: 30, spread: 60, origin: { y: 0.2 } });
+        }
+
+        // Web Audio synthesizer for click sounds
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSynthBeep(freq = 440, type = 'sine', duration = 0.15) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) { console.log(e); }
+        }
+
+        function toggleAudio() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('audioBtn');
+            btn.innerHTML = isMuted 
+                ? `<i class="fa-solid fa-volume-xmark"></i> <span class="hidden md:inline">Muteado</span>`
+                : `<i class="fa-solid fa-music"></i> <span class="hidden md:inline">Efectos Sonoros</span>`;
+        }
+
+        const memorySymbols = ['🎂', '🎁', '👑', '🎉', '🎈', '🍾'];
+        let memoryDeck = [...memorySymbols, ...memorySymbols];
+        let flippedCards = [];
+        let matchedPairs = 0;
+
+        function initMemoryGame() {
+            const board = document.getElementById('memoryBoard');
+            board.innerHTML = '';
+            memoryDeck.sort(() => Math.random() - 0.5);
+            flippedCards = [];
+            matchedPairs = 0;
+
+            memoryDeck.forEach((emoji, index) => {
+                const card = document.createElement('button');
+                card.className = "h-16 rounded-2xl bg-purple-900/60 border border-purple-600/40 text-2xl flex items-center justify-center transition-all duration-300 hover:border-amber-400";
+                card.dataset.emoji = emoji;
+                card.dataset.index = index;
+                card.innerHTML = `<span class="opacity-0 transition duration-300">${emoji}</span>`;
+                card.onclick = () => handleMemoryClick(card);
+                board.appendChild(card);
+            });
+        }
+
+        function handleMemoryClick(card) {
+            if (flippedCards.length >= 2 || card.classList.contains('matched') || flippedCards.includes(card)) return;
+
+            playSynthBeep(523, 'triangle', 0.1);
+            card.querySelector('span').classList.remove('opacity-0');
+            card.classList.add('bg-purple-800', 'border-amber-400');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                const [c1, c2] = flippedCards;
+                if (c1.dataset.emoji === c2.dataset.emoji) {
+                    playSynthBeep(784, 'sine', 0.2);
+                    c1.classList.add('matched', 'border-green-400', 'bg-green-950/40');
+                    c2.classList.add('matched', 'border-green-400', 'bg-green-950/40');
+                    matchedPairs++;
+                    flippedCards = [];
+                    if (matchedPairs === memorySymbols.length) {
+                        setTimeout(() => {
+                            confetti({ particleCount: 50, spread: 70 });
+                        }, 300);
+                    }
+                } else {
+                    setTimeout(() => {
+                        c1.querySelector('span').classList.add('opacity-0');
+                        c2.querySelector('span').classList.add('opacity-0');
+                        c1.classList.remove('bg-purple-800', 'border-amber-400');
+                        c2.classList.remove('bg-purple-800', 'border-amber-400');
+                        flippedCards = [];
+                    }, 800);
+                }
+            }
+        }
+
+        function resetMemoryGame() {
+            initMemoryGame();
+        }
+
+        function startQuiz() {
+            document.getElementById('landingScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            currentQuestionIdx = 0;
+            obtainedCodes = [];
+            document.getElementById('codesCount').textContent = '0';
+            renderQuestion();
+            playSynthBeep(600, 'sine', 0.2);
+        }
+
+        function renderQuestion() {
+            const q = questionsData[currentQuestionIdx];
+            document.getElementById('questionNum').textContent = currentQuestionIdx + 1;
+            document.getElementById('yearBadge').textContent = q.year;
+            document.getElementById('questionText').textContent = q.question;
+            
+            // Progress bar calculation
+            const percent = ((currentQuestionIdx + 1) / questionsData.length) * 100;
+            document.getElementById('quizProgressBar').style.width = `${percent}%`;
+
+            // Clear feedback box
+            const feedbackBox = document.getElementById('feedbackBox');
+            feedbackBox.className = "hidden p-4 rounded-2xl text-center font-bold text-sm transition-all duration-300";
+
+            // Render option buttons
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-4 rounded-2xl bg-purple-900/40 border border-purple-700/50 hover:border-amber-400 hover:bg-purple-800/60 text-left font-semibold text-slate-100 transition duration-200 flex justify-between items-center group";
+                btn.innerHTML = `
+                    <span>${opt}</span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100 text-amber-300 transition"></i>
+                `;
+                btn.onclick = () => selectOption(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIdx) {
+            const q = questionsData[currentQuestionIdx];
+            const feedbackBox = document.getElementById('feedbackBox');
+            const container = document.getElementById('optionsContainer');
+            
+            Array.from(container.children).forEach(btn => btn.disabled = true);
+
+            if (selectedIdx === q.correct) {
+                // Correct answer!
+                playSynthBeep(880, 'sine', 0.25);
+                obtainedCodes.push(q.code);
+                document.getElementById('codesCount').textContent = obtainedCodes.length;
+
+                feedbackBox.className = "p-4 rounded-2xl text-center font-bold text-sm bg-green-950/80 border border-green-500 text-green-300 block animate-bounce";
+                feedbackBox.innerHTML = `
+                    🎉 ¡Correcto! Has ganado el Código: <span class="font-mono bg-green-900 px-2 py-1 rounded text-amber-300 font-extrabold">${q.code}</span>
+                `;
+                confetti({ particleCount: 40, spread: 50, origin: { y: 0.6 } });
+            } else {
+                // Wrong answer
+                playSynthBeep(220, 'sawtooth', 0.3);
+                feedbackBox.className = "p-4 rounded-2xl text-center font-bold text-sm bg-rose-950/80 border border-rose-500 text-rose-300 block";
+                feedbackBox.innerHTML = `
+                    😅 ¡Casi! La respuesta correcta era: "${q.options[q.correct]}". ¡Sin código esta vez!
+                `;
+            }
+
+            // Transition to next question
+            setTimeout(() => {
+                currentQuestionIdx++;
+                if (currentQuestionIdx < questionsData.length) {
+                    renderQuestion();
+                } else {
+                    finishQuizAndShowVault();
+                }
+            }, 2200);
+        }
+
+        function finishQuizAndShowVault() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('vaultScreen').classList.remove('hidden');
+
+            const codesContainer = document.getElementById('obtainedCodesList');
+            codesContainer.innerHTML = '';
+
+            if (obtainedCodes.length === 0) {
+                codesContainer.innerHTML = `<span class="text-xs text-rose-400 italic">No has obtenido ningún código en esta partida. ¡Vuelve a intentarlo!</span>`;
+            } else {
+                obtainedCodes.forEach(code => {
+                    const pill = document.createElement('span');
+                    const isGold = code.includes('GOLD');
+                    pill.className = `px-3 py-1.5 rounded-xl font-mono text-xs font-bold flex items-center gap-1.5 cursor-pointer ${
+                        isGold ? 'bg-amber-400 text-slate-950 border border-amber-300 shadow-md' : 'bg-purple-900 text-purple-200 border border-purple-600'
+                    }`;
+                    pill.innerHTML = `<i class="fa-solid ${isGold ? 'fa-crown text-amber-900' : 'fa-key'}"></i> ${code}`;
+                    pill.onclick = () => {
+                        document.getElementById('manualCodeInput').value = code;
+                        testManualCode();
+                    };
+                    codesContainer.appendChild(pill);
+                });
+            }
+
+            renderGiftsGrid();
+
+            // VIP Challenge check
+            const hasVipCode = obtainedCodes.includes('GOLD-VIP-2828');
+            if (!hasVipCode) {
+                setTimeout(() => {
+                    document.getElementById('challengeModal').classList.remove('hidden');
+                }, 1000);
+            } else {
+                confetti({ particleCount: 100, spread: 100, origin: { y: 0.4 } });
+            }
+        }
+
+        function renderGiftsGrid() {
+            const grid = document.getElementById('giftsGrid');
+            grid.innerHTML = '';
+
+            for (let i = 1; i <= 10; i++) {
+                const isOpened = openedGifts.has(i);
+                const card = document.createElement('div');
+                card.className = `gold-card-border rounded-2xl p-4 text-center flex flex-col items-center justify-between min-h-[160px] relative transition duration-300 hover:scale-105 ${
+                    isOpened ? 'bg-amber-950/40 border-amber-400' : ''
+                }`;
+
+                card.innerHTML = `
+                    <div class="text-xs text-purple-400 font-bold uppercase">Regalo #${i}</div>
+                    <div class="text-4xl my-2 ${isOpened ? '' : 'animate-bounce'}" style="animation-duration: 3s;">
+                        ${isOpened ? '🎁' : '📦'}
+                    </div>
+                    <span class="text-[11px] font-bold px-2 py-1 rounded-lg ${
+                        isOpened ? 'bg-green-500/20 text-green-300 border border-green-500/40' : 'bg-purple-900/60 text-purple-300'
+                    }">
+                        ${isOpened ? 'ABIERTO' : 'BLOQUEADO'}
+                    </span>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        function testManualCode() {
+            const input = document.getElementById('manualCodeInput');
+            const code = input.value.trim().toUpperCase();
+            const msg = document.getElementById('manualCodeMsg');
+
+            msg.classList.remove('hidden', 'text-green-400', 'text-rose-400');
+
+            if (!code) {
+                msg.textContent = 'Por favor, introduce un código.';
+                msg.classList.add('text-rose-400');
+                return;
+            }
+
+            if (giftsData[code]) {
+                // Valid Code
+                const gift = giftsData[code];
+                playSynthBeep(1000, 'sine', 0.4);
+                confetti({ particleCount: 80, spread: 80 });
+
+                openedGifts.add(openedGifts.size + 1);
+                renderGiftsGrid();
+
+                document.getElementById('giftModalIcon').textContent = gift.icon;
+                document.getElementById('giftModalBadge').textContent = gift.isVip ? '👑 REGALO VIP DORADO' : '🎁 REGALO DESBLOQUEADO';
+                document.getElementById('giftModalTitle').textContent = gift.title;
+                document.getElementById('giftModalDesc').textContent = gift.desc;
+                document.getElementById('giftModal').classList.remove('hidden');
+
+                msg.textContent = '¡Código válido! Se ha abierto un regalo.';
+                msg.classList.add('text-green-400');
+            } else {
+                // Invalid or Dummy Code
+                playSynthBeep(200, 'sawtooth', 0.3);
+                msg.textContent = '❌ Este código no abre ningún regalo (es uno de los códigos no válidos). ¡Sigue intentándolo!';
+                msg.classList.add('text-rose-400');
+            }
+        }
+
+        function completeVipChallenge() {
+            document.getElementById('challengeModal').classList.add('hidden');
+            if (!obtainedCodes.includes('GOLD-VIP-2828')) {
+                obtainedCodes.push('GOLD-VIP-2828');
+            }
+            document.getElementById('manualCodeInput').value = 'GOLD-VIP-2828';
+            testManualCode();
+        }
+
+        function closeGiftModal() {
+            document.getElementById('giftModal').classList.add('hidden');
+        }
+
+        function restartEntireGame() {
+            document.getElementById('vaultScreen').classList.add('hidden');
+            document.getElementById('landingScreen').classList.remove('hidden');
+            openedGifts.clear();
+            obtainedCodes = [];
+        }
+
+        // Floating ambient balloons generator
+        function createBalloons() {
+            const container = document.getElementById('balloonContainer');
+            const colors = ['#facc15', '#ff2a85', '#7e22ce', '#38bdf8', '#4ade80'];
+            
+            for (let i = 0; i < 12; i++) {
+                const balloon = document.createElement('div');
+                balloon.className = 'balloon';
+                const size = Math.floor(Math.random() * 30) + 30;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                balloon.style.left = `${Math.random() * 90}%`;
+                balloon.style.width = `${size}px`;
+                balloon.style.height = `${size * 1.2}px`;
+                balloon.style.backgroundColor = color;
+                balloon.style.borderRadius = '50% 50% 50% 50% / 40% 40% 60% 60%';
+                balloon.style.animationDuration = `${12 + Math.random() * 10}s`;
+                balloon.style.animationDelay = `${Math.random() * 5}s`;
+                balloon.style.boxShadow = `inset -5px -5px 10px rgba(0,0,0,0.3), 0 0 15px ${color}66`;
+
+                container.appendChild(balloon);
+            }
+        }
+
+        window.onload = function() {
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+            initMemoryGame();
+            createBalloons();
+        };
+    </script>
+</body>
+</html>
