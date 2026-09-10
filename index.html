@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Los 28 de Carmen! - El Trivial de tu Vida</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Montserrat & Dancing Script -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            100: '#fef9c3',
+                            300: '#fde047',
+                            400: '#facc15',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        },
+                        party: {
+                            pink: '#ff2a85',
+                            purple: '#7e22ce',
+                            deep: '#0f051d',
+                            accent: '#ff007f'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        cursive: ['Dancing Script', 'cursive'],
+                    },
+                    animation: {
+                        'pulse-glow': 'pulseGlow 2s infinite',
+                    },
+                    keyframes: {
+                        pulseGlow: {
+                            '0%, 100%': { boxShadow: '0 0 15px rgba(250, 204, 21, 0.4)' },
+                            '50%': { boxShadow: '0 0 35px rgba(250, 204, 21, 0.85)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f051d;
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(255, 42, 133, 0.18) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(126, 34, 206, 0.25) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(250, 204, 21, 0.08) 0px, transparent 60%);
+            background-attachment: fixed;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #ffffff 0%, #fde047 40%, #facc15 70%, #ca8a04 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .gold-card-border {
+            border: 2px solid rgba(250, 204, 21, 0.35);
+            background: rgba(24, 9, 43, 0.78);
+            backdrop-filter: blur(14px);
+        }
+
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            opacity: 0.65;
+            animation: floatUp 16s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.65; }
+            100% { transform: translateY(-125vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Roulette Canvas styling */
+        #rouletteWheel {
+            filter: drop-shadow(0 0 18px rgba(250, 204, 21, 0.4));
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f051d;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #7e22ce;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans justify-between relative selection:bg-party-pink selection:text-white">
+
+    <div id="balloonContainer" class="fixed inset-0 overflow-hidden pointer-events-none z-0"></div>
+
+    <!-- Header Section -->
+    <header class="relative z-20 w-full py-4 px-4 sm:px-6 border-b border-purple-900/50 bg-party-deep/80 backdrop-blur-md sticky top-0">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl animate-bounce" style="animation-duration: 2.5s;">🎉</span>
+                <span class="font-cursive text-2xl sm:text-3xl font-bold text-amber-300">Carmen's 28th</span>
+            </div>
+            
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button onclick="openEarlyAccessModal()" class="px-3 sm:px-4 py-2 rounded-full bg-gradient-to-r from-amber-500/20 to-pink-500/20 hover:from-amber-500/40 hover:to-pink-500/40 text-amber-300 border border-amber-400/50 text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 transition shadow-lg shadow-amber-500/10">
+                    <i class="fa-solid fa-key text-amber-400"></i> Acceso Anticipado
+                </button>
+
+                <button onclick="toggleAudio()" id="audioBtn" class="p-2 px-3 rounded-full bg-purple-900/50 hover:bg-purple-800 text-amber-300 border border-purple-500/40 text-xs sm:text-sm flex items-center gap-2 transition" title="Activar/Silenciar sonido">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="relative z-10 flex-grow max-w-5xl mx-auto w-full px-4 py-6 sm:py-8 flex flex-col items-center justify-center">
+
+        <!-- 1. PANTALLA INICIO (COUNTDOWN & REGLAS) -->
+        <section id="landingScreen" class="w-full text-center space-y-6 sm:space-y-8 my-auto transition-all duration-500">
+            
+            <!-- Hero Title Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-amber-500/20 border border-amber-400/40 text-amber-300 text-xs sm:text-sm font-bold tracking-wider uppercase">
+                <i class="fa-solid fa-crown text-amber-400"></i> Edición Especial 28º Aniversario <i class="fa-solid fa-crown text-amber-400"></i>
+            </div>
+
+            <div class="space-y-2 sm:space-y-3">
+                <h1 class="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight">
+                    <span class="block text-white">¡Bienvenida al Juego de tus</span>
+                    <span class="gold-gradient-text text-4xl sm:text-6xl md:text-7xl font-extrabold uppercase drop-shadow-lg">28 Cumpleaños!</span>
+                </h1>
+                <p class="text-purple-300 text-base sm:text-xl max-w-2xl mx-auto font-light">
+                    Un viaje inolvidable por los momentos más memorables de tus últimos 10 años.
+                </p>
+            </div>
+
+            <!-- Countdown Timer Card -->
+            <div class="max-w-3xl mx-auto gold-card-border rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden group">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                <div class="flex items-center justify-center gap-2 mb-5">
+                    <i class="fa-solid fa-clock text-amber-400 text-lg animate-spin" style="animation-duration: 8s;"></i>
+                    <h2 class="text-base sm:text-lg font-bold uppercase tracking-widest text-amber-200">
+                        El trivial comienza en:
+                    </h2>
+                </div>
+
+                <!-- Timer Numbers -->
+                <div class="grid grid-cols-4 gap-2 sm:gap-4 max-w-lg mx-auto">
+                    <div class="bg-purple-950/80 border border-purple-700/60 rounded-2xl p-3 sm:p-4 text-center">
+                        <span id="timerDays" class="block text-2xl sm:text-5xl font-black text-amber-400 font-mono">00</span>
+                        <span class="text-[10px] sm:text-xs uppercase tracking-wider text-purple-300 font-semibold">Días</span>
+                    </div>
+                    <div class="bg-purple-950/80 border border-purple-700/60 rounded-2xl p-3 sm:p-4 text-center">
+                        <span id="timerHours" class="block text-2xl sm:text-5xl font-black text-amber-400 font-mono">00</span>
+                        <span class="text-[10px] sm:text-xs uppercase tracking-wider text-purple-300 font-semibold">Horas</span>
+                    </div>
+                    <div class="bg-purple-950/80 border border-purple-700/60 rounded-2xl p-3 sm:p-4 text-center">
+                        <span id="timerMinutes" class="block text-2xl sm:text-5xl font-black text-amber-400 font-mono">00</span>
+                        <span class="text-[10px] sm:text-xs uppercase tracking-wider text-purple-300 font-semibold">Minutos</span>
+                    </div>
+                    <div class="bg-purple-950/80 border border-purple-700/60 rounded-2xl p-3 sm:p-4 text-center">
+                        <span id="timerSeconds" class="block text-2xl sm:text-5xl font-black font-mono text-pink-400">00</span>
+                        <span class="text-[10px] sm:text-xs uppercase tracking-wider text-purple-300 font-semibold">Segundos</span>
+                    </div>
+                </div>
+
+                <p class="text-xs text-purple-300/80 mt-4 italic">
+                    Fecha de apertura oficial: <span class="text-amber-300 font-semibold">16 de Septiembre de 2026 - 00:00 h</span>
+                </p>
+            </div>
+
+            <!-- Rules & Explanation Card -->
+            <div class="max-w-3xl mx-auto gold-card-border rounded-3xl p-6 sm:p-8 text-left space-y-5 shadow-xl relative">
+                <div class="flex items-center gap-3 border-b border-purple-800/60 pb-4">
+                    <div class="w-10 h-10 rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-amber-300 font-bold text-xl">
+                        <i class="fa-solid fa-scroll"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg sm:text-xl font-bold text-white">Reglas e Instrucciones del Trivial</h3>
+                        <p class="text-xs text-purple-300">Lee con mucha atención antes de empezar</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-slate-200 text-sm sm:text-base leading-relaxed">
+                    <p class="p-4 rounded-2xl bg-purple-900/30 border border-purple-700/40 text-amber-100 font-medium">
+                        ¡Bienvenida al juego de tus <span class="text-amber-300 font-bold">28 cumpleaños</span> donde tendrás que enfrentarte a <span class="text-amber-300 font-bold">10 preguntas</span> de tus últimos 10 años! Por cada acierto obtendrás un código de 4 cifras para abrir tus regalos. Si fallas una pregunta, ¡no se generará ningún código!
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 flex items-start gap-3">
+                            <i class="fa-solid fa-crown text-amber-400 text-2xl mt-1"></i>
+                            <div>
+                                <h4 class="font-bold text-amber-300 text-sm">La Pregunta 10 es VIP Dorada</h4>
+                                <p class="text-xs text-amber-100/80 mt-1">La pregunta 10 es la Joya de la Corona y abre el Regalo VIP. ¡Presta el doble de atención!</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-pink-950/30 border border-pink-500/40 flex items-start gap-3">
+                            <i class="fa-solid fa-gift text-pink-400 text-2xl mt-1"></i>
+                            <div>
+                                <h4 class="font-bold text-pink-300 text-sm">5 Códigos con Regalo Real</h4>
+                                <p class="text-xs text-pink-100/80 mt-1">Solo los códigos de las preguntas <strong>4, 5, 8, 9 y 10</strong> esconden regalos con su ubicación real en la casa.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-purple-950/70 border border-purple-600/40 flex items-center gap-3">
+                        <i class="fa-solid fa-pencil text-amber-400 text-xl"></i>
+                        <p class="text-xs sm:text-sm text-purple-200 font-semibold">
+                            ⚠️ <strong>¡IMPORTANTE!</strong> Ten preparado <strong>papel y boli</strong> para ir apuntando cada código de 4 cifras que ganes durante el trivial.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Start Trivia Button -->
+                <div class="pt-3 text-center">
+                    <button id="startGameBtn" disabled onclick="startQuiz()" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-black text-base sm:text-lg tracking-wide uppercase shadow-lg shadow-amber-500/20 opacity-50 cursor-not-allowed transition duration-300 hover:scale-105">
+                        <i class="fa-solid fa-lock mr-2"></i> Bloqueado hasta el 16/09/2026
+                    </button>
+                    <p id="previewNotice" class="text-xs text-amber-400 mt-2 font-bold hidden">
+                        ✨ ¡Acceso anticipado concedido con éxito! Puedes comenzar el trivial cuando quieras.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Mini juego de memoria para esperar -->
+            <div class="max-w-3xl mx-auto bg-purple-950/40 border border-purple-800/40 rounded-3xl p-5 sm:p-6 text-center space-y-4">
+                <div class="flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-brain text-pink-400 text-lg"></i>
+                    <h3 class="text-base sm:text-lg font-bold text-white">¿Quieres ir entrenando tu memoria?</h3>
+                </div>
+                <p class="text-xs text-purple-300 max-w-md mx-auto">
+                    Empareja los iconos de la fiesta para calentar motores antes de responder las 10 preguntas.
+                </p>
+                <div id="memoryBoard" class="grid grid-cols-4 gap-2.5 max-w-xs sm:max-w-md mx-auto pt-2"></div>
+                <button onclick="resetMemoryGame()" class="text-xs text-amber-400 hover:text-amber-300 underline font-semibold pt-1">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> Reiniciar entrenamiento
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. PANTALLA DE PREGUNTAS (TRIVIAL) -->
+        <section id="quizScreen" class="w-full max-w-3xl hidden space-y-6 my-auto">
+            
+            <!-- Top bar with progress and counter -->
+            <div class="gold-card-border rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div id="qNumBadge" class="w-10 h-10 rounded-full bg-pink-500/20 border border-pink-500/50 flex items-center justify-center text-pink-300 font-extrabold text-sm">
+                        <span id="questionNum">1</span>/10
+                    </div>
+                    <div>
+                        <span id="qTagBadge" class="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-purple-900 border border-purple-600 text-purple-200">
+                            Pregunta Estándar
+                        </span>
+                        <p class="text-xs text-purple-300 font-medium mt-0.5">Trivial Oficial Carmen 28</p>
+                    </div>
+                </div>
+
+                <div class="w-full sm:w-44 bg-purple-950 rounded-full h-3 overflow-hidden border border-purple-700/50">
+                    <div id="quizProgressBar" class="bg-gradient-to-r from-pink-500 to-amber-400 h-full w-[10%] transition-all duration-300"></div>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs text-amber-300 font-mono font-bold bg-amber-400/10 px-3 py-1.5 rounded-xl border border-amber-400/30">
+                    <i class="fa-solid fa-key"></i> Códigos Obtenidos: <span id="codesCount">0</span>
+                </div>
+            </div>
+
+            <!-- Question Card container -->
+            <div id="questionCard" class="gold-card-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative transition-all duration-300">
+                
+                <!-- VIP Badge Banner (Only for Q10) -->
+                <div id="vipBanner" class="hidden p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-400/30 to-amber-500/20 border-2 border-amber-400 text-amber-300 font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 uppercase tracking-widest animate-pulse">
+                    <i class="fa-solid fa-crown text-amber-400 text-xl"></i> ¡PREGUNTA VIP DORADA - REGALO ESTRELLA! <i class="fa-solid fa-crown text-amber-400 text-xl"></i>
+                </div>
+
+                <h3 id="questionText" class="text-xl sm:text-2xl font-bold text-white leading-relaxed">
+                    Cargando pregunta...
+                </h3>
+
+                <!-- Options -->
+                <div id="optionsContainer" class="grid grid-cols-1 gap-3">
+                    <!-- Option buttons populated by JS -->
+                </div>
+
+                <!-- Feedback Area with code -->
+                <div id="feedbackBox" class="hidden p-4 rounded-2xl text-center font-bold text-sm transition-all duration-300"></div>
+            </div>
+
+        </section>
+
+        <!-- 3. PANTALLA DE REVISIÓN DE CÓDIGOS (APUNTAR EN PAPEL) -->
+        <section id="summaryScreen" class="w-full max-w-3xl hidden space-y-6 my-auto text-center">
+            <div class="space-y-3">
+                <span class="px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/50 text-amber-300 text-xs font-black uppercase tracking-wider inline-block">
+                    🎉 ¡Has completado las 10 preguntas!
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-black text-white">Tus Códigos Obtenidos</h2>
+                <p class="text-sm text-purple-300 max-w-xl mx-auto">
+                    Apunta con calma estos códigos en tu papel. Recuerda que no todos abren regalos: ¡solo 5 de ellos son válidos y esconden un premio real en casa!
+                </p>
+            </div>
+
+            <!-- List of earned codes -->
+            <div class="gold-card-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl text-left">
+                <div class="flex items-center justify-between border-b border-purple-800/60 pb-3">
+                    <span class="text-xs uppercase font-bold text-amber-300 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> Códigos de 4 cifras ganados:
+                    </span>
+                    <span id="summaryAciertosBadge" class="text-xs px-2.5 py-1 rounded-lg bg-purple-900 border border-purple-600 text-purple-200 font-bold">
+                        0/10 Aciertos
+                    </span>
+                </div>
+
+                <div id="summaryCodesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Codes or failed questions displayed here -->
+                </div>
+
+                <div class="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/40 text-amber-200 text-xs sm:text-sm flex items-center gap-3">
+                    <i class="fa-solid fa-circle-info text-amber-400 text-xl flex-shrink-0"></i>
+                    <span>¿Ya los has apuntado en tu papel? Pulsa en el botón a continuación para empezar a probarlos en la bóveda de regalos.</span>
+                </div>
+
+                <!-- Big Button requested: "Introducir códigos para ganar regalos" -->
+                <div class="text-center pt-2">
+                    <button onclick="goToVaultScreen()" class="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 text-slate-950 font-black text-base sm:text-lg uppercase tracking-wider shadow-xl hover:scale-105 transition transform shadow-amber-500/30">
+                        <i class="fa-solid fa-gift mr-2"></i> INTRODUCIR CÓDIGOS PARA GANAR REGALOS
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. PANTALLA BÓVEDA DE REGALOS (INTRODUCIR CÓDIGOS & RULETA) -->
+        <section id="vaultScreen" class="w-full max-w-4xl hidden space-y-8 my-auto">
+            
+            <div class="text-center space-y-3">
+                <span class="px-4 py-1.5 rounded-full bg-amber-400/20 border border-amber-400/50 text-amber-300 text-xs font-black uppercase tracking-wider inline-block">
+                    🎁 Bóveda Secreta
+                </span>
+                <h2 class="text-3xl sm:text-4xl font-black text-white">Encuentra tus Regalos</h2>
+                <p class="text-sm sm:text-base text-purple-300 max-w-xl mx-auto">
+                    Introduce tus códigos de 4 cifras. Solo los 5 códigos clave revelarán el lugar exacto de tu casa donde se ocultan los regalos.
+                </p>
+            </div>
+
+            <!-- Input Box for code testing -->
+            <div class="gold-card-border rounded-3xl p-6 sm:p-8 text-center max-w-lg mx-auto space-y-4 shadow-2xl">
+                <h4 class="font-bold text-white text-base">Introduce tu código de 4 cifras:</h4>
+                <div class="flex gap-2 justify-center">
+                    <input type="text" id="manualCodeInput" maxlength="4" placeholder="0000" class="w-48 px-4 py-3 rounded-2xl bg-purple-950 border-2 border-purple-600 text-amber-300 placeholder-purple-400 text-center font-mono font-black text-2xl tracking-widest uppercase focus:outline-none focus:border-amber-400 transition">
+                    <button onclick="testManualCode()" class="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-sm uppercase hover:brightness-110 transition shadow-lg">
+                        Probar
+                    </button>
+                </div>
+                <div id="manualCodeMsg" class="text-xs font-bold hidden py-1"></div>
+            </div>
+
+            <!-- Regalos Desbloqueados Status -->
+            <div class="gold-card-border rounded-3xl p-6 space-y-4 shadow-xl">
+                <div class="flex items-center justify-between border-b border-purple-800/60 pb-3">
+                    <h3 class="font-bold text-white text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-amber-400"></i> Ubicaciones de Regalos Descubiertas:
+                    </h3>
+                    <span id="giftsUnlockedBadge" class="text-xs font-mono font-bold px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                        0 / 5 Descubiertos
+                    </span>
+                </div>
+
+                <div id="unlockedGiftsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <!-- Cards will be populated when discovered -->
+                </div>
+            </div>
+
+            <!-- ZONA DE RETOS (RULETA) - Aparece si falló alguna pregunta clave o para desbloquear códigos faltantes -->
+            <div id="rouletteSection" class="gold-card-border rounded-3xl p-6 sm:p-8 text-center space-y-6 shadow-2xl relative overflow-hidden">
+                <div class="space-y-2">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 text-xs font-black uppercase">
+                        <i class="fa-solid fa-dice"></i> Zona de Retos en Casa
+                    </div>
+                    <h3 class="text-2xl sm:text-3xl font-black text-white">¿Te falta algún código clave?</h3>
+                    <p class="text-xs sm:text-sm text-purple-300 max-w-xl mx-auto">
+                        ¡No te preocupes si no acertaste todas las preguntas! Gira la ruleta, cumple el reto en directo delante de todos y obtendrás el código que te falte para abrir tus regalos.
+                    </p>
+                </div>
+
+                <!-- Missing questions selector -->
+                <div id="missingQuestionsBox" class="max-w-md mx-auto text-left bg-purple-950/70 p-4 rounded-2xl border border-purple-700/60 space-y-2">
+                    <label class="block text-xs font-bold text-amber-300 uppercase tracking-wider">
+                        1. Selecciona qué regalo quieres rescatar:
+                    </label>
+                    <select id="missingGiftSelect" class="w-full bg-purple-900 border border-purple-600 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400 font-medium">
+                        <!-- Options filled by JS based on missing questions -->
+                    </select>
+                </div>
+
+                <!-- Canvas Roulette Wheel -->
+                <div class="relative flex flex-col items-center justify-center py-2">
+                    <!-- Needle Indicator -->
+                    <div class="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-amber-400 z-10 -mb-3 drop-shadow-md"></div>
+                    <canvas id="rouletteWheel" width="300" height="300" class="rounded-full shadow-2xl"></canvas>
+                </div>
+
+                <div>
+                    <button id="spinBtn" onclick="spinRoulette()" class="px-8 py-4 rounded-2xl bg-gradient-to-r from-pink-500 via-purple-600 to-amber-500 text-white font-black text-base uppercase tracking-wider shadow-lg hover:scale-105 transition transform">
+                        <i class="fa-solid fa-arrows-rotate mr-2"></i> ¡GIRAR LA RULETA!
+                    </button>
+                </div>
+
+                <!-- Reto Result Modal / Container -->
+                <div id="challengeResultBox" class="hidden max-w-md mx-auto p-5 rounded-2xl bg-amber-950/70 border-2 border-amber-400 text-amber-200 space-y-3 animate-bounce">
+                    <div class="text-xs font-black uppercase tracking-widest text-amber-400">🔥 Reto a cumplir:</div>
+                    <p id="challengeResultText" class="font-bold text-base text-white">Reto...</p>
+                    <button onclick="claimChallengeCode()" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs uppercase hover:scale-102 transition">
+                        <i class="fa-solid fa-check mr-1.5"></i> ¡Reto Superado! Revelar Código
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center pt-2">
+                <button onclick="restartEntireGame()" class="text-xs text-purple-400 hover:text-amber-300 underline font-semibold">
+                    <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Reiniciar y volver a la portada
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: ACCESO ANTICIPADO (PIN 0707) -->
+    <div id="earlyAccessModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="gold-card-border rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-5 relative animate-pulse-glow">
+            <button onclick="closeEarlyAccessModal()" class="absolute top-4 right-4 text-purple-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="w-14 h-14 rounded-2xl bg-amber-400/20 border-2 border-amber-400/50 mx-auto flex items-center justify-center text-amber-300 text-2xl">
+                <i class="fa-solid fa-key"></i>
+            </div>
+
+            <div>
+                <h3 class="text-2xl font-black text-white">Acceso Anticipado</h3>
+                <p class="text-xs text-purple-300 mt-1">Introduce el código PIN de 4 cifras para desbloquear el trivial antes del 16 de septiembre.</p>
+            </div>
+
+            <div class="space-y-3">
+                <input type="password" id="pinInput" maxlength="4" placeholder="••••" class="w-40 px-4 py-3 rounded-2xl bg-purple-950 border-2 border-purple-600 text-amber-300 text-center font-mono font-black text-3xl tracking-widest focus:outline-none focus:border-amber-400">
+                <div id="pinErrorMsg" class="text-xs text-rose-400 font-bold hidden">Código incorrecto. Inténtalo de nuevo.</div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closeEarlyAccessModal()" class="w-1/2 py-3 rounded-xl bg-purple-900/60 hover:bg-purple-800 text-purple-300 font-bold text-xs">
+                    Cancelar
+                </button>
+                <button onclick="verifyEarlyAccessPin()" class="w-1/2 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 font-black text-xs uppercase hover:brightness-110">
+                    Entrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: REGALO ENCONTRADO / UBICACIÓN -->
+    <div id="giftModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="gold-card-border rounded-3xl p-6 sm:p-8 max-w-md w-full text-center space-y-5 relative">
+            <div id="giftModalIcon" class="text-6xl animate-bounce">
+                🎁
+            </div>
+            <div>
+                <span id="giftModalBadge" class="px-3 py-1 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40 text-xs font-black uppercase">
+                    ¡CÓDIGO CORRECTO!
+                </span>
+                <h3 id="giftModalTitle" class="text-2xl font-black text-white mt-2">Ubicación del Regalo</h3>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-amber-950/70 border-2 border-amber-400 text-center space-y-1">
+                <span class="text-[11px] uppercase tracking-wider text-amber-300 font-bold">Búscalo en:</span>
+                <p id="giftModalLocation" class="text-xl sm:text-2xl font-black text-amber-300 drop-shadow">
+                    Lugar...
+                </p>
+            </div>
+
+            <p id="giftModalDesc" class="text-xs text-purple-200 leading-relaxed">
+                ¡Corre a buscarlo! Apunta la ubicación y continúa introduciendo los demás códigos.
+            </p>
+
+            <button onclick="closeGiftModal()" class="w-full py-3 rounded-xl bg-purple-800 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider transition">
+                Entendido
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 w-full py-4 text-center text-xs text-purple-400/60 border-t border-purple-900/40 bg-party-deep/90">
+        Hecho con ❤️ para los 28 cumpleaños de Carmen | 16/09/2026
+    </footer>
+
+    <!-- LOGIC & SCRIPTS -->
+    <script>
+        // TARGET DATE: 16 de Septiembre de 2026 - 00:00:00
+        const TARGET_DATE = new Date('2026-09-16T00:00:00');
+        const PIN_ACCESO = '0707';
+        let isUnlocked = false;
+
+        // Audio state
+        let audioCtx;
+        let isMuted = false;
+
+        // User Trivia State
+        let currentQIdx = 0;
+        let userResponses = []; 
+        let generatedCodes = {}; // Maps question index (0-9) to 4-digit code
+        let unlockedGifts = new Set(); // Stores opened question numbers (4, 5, 8, 9, 10)
+        let activeChallengeQuestion = null;
+
+        // 10 REAL HANDWRITTEN QUESTIONS FROM USER'S IMAGES
+        // Correct answers are marked according to the checkboxes in the notebook.
+        // Valid questions with gifts: 4, 5, 8, 9 and 10 (indices 3, 4, 7, 8, 9).
+        const questionsList = [
+            {
+                number: 1,
+                question: "1. ¿De qué color era la camiseta cuando me conociste?",
+                options: ["A. Blanca", "B. Verde", "C. Roja"],
+                correct: 1, // B. Verde
+                hasGift: false,
+                isVip: false,
+                location: null
+            },
+            {
+                number: 2,
+                question: "2. ¿Por qué nos peleamos en el viaje a Sanlúcar?",
+                options: ["A. Donuts", "B. Caña", "C. Galletas"],
+                correct: 2, // C. Galletas
+                hasGift: false,
+                isVip: false,
+                location: null
+            },
+            {
+                number: 3,
+                question: "3. En el viaje a Cádiz, ¿qué alimento se nos olvidó comprar?",
+                options: ["A. Aceite", "B. Sal", "C. Azúcar"],
+                correct: 0, // A. Aceite
+                hasGift: false,
+                isVip: false,
+                location: null
+            },
+            {
+                number: 4,
+                question: "4. ¿De qué chucha estabas antojada en el viaje a Montoro?",
+                options: ["A. Moras", "B. Sandías", "C. Cerebros"],
+                correct: 1, // B. Sandías
+                hasGift: true,
+                isVip: false,
+                location: "Bajo la cama cuarto chico",
+                giftName: "Regalo Pregunta 4"
+            },
+            {
+                number: 5,
+                question: "5. ¿Cómo se llamaban los supermercados en Canarias?",
+                options: ["A. Super Hipo", "B. Dino Hipo", "C. Hipodino"],
+                correct: 2, // C. Hipodino
+                hasGift: true,
+                isVip: false,
+                location: "Ducha",
+                giftName: "Regalo Pregunta 5"
+            },
+            {
+                number: 6,
+                question: "6. ¿Qué era Patilarga?",
+                options: ["A. Un pulpo", "B. Una rana", "C. Una araña"],
+                correct: 1, // B. Una rana
+                hasGift: false,
+                isVip: false,
+                location: null
+            },
+            {
+                number: 7,
+                question: "7. ¿Qué compramos en Benalbeach para llevarnos al parque?",
+                options: ["A. El Uno", "B. Parchís", "C. Cartas"],
+                correct: 2, // C. Cartas
+                hasGift: false,
+                isVip: false,
+                location: null
+            },
+            {
+                number: 8,
+                question: "8. ¿Cuál es el nombre original de Langost?",
+                options: ["A. Dorí", "B. Bicho", "C. Langost"],
+                correct: 0, // A. Dorí
+                hasGift: true,
+                isVip: false,
+                location: "Mesita de noche",
+                giftName: "Regalo Pregunta 8"
+            },
+            {
+                number: 9,
+                question: "9. ¿Quién era el sustituto de Dopey para dormir?",
+                options: ["A. Jirafa", "B. Hormiguita", "C. Stich"],
+                correct: 1, // B. Hormiguita
+                hasGift: true,
+                isVip: false,
+                location: "Mueble limpieza",
+                giftName: "Regalo Pregunta 9"
+            },
+            {
+                number: 10,
+                question: "10. ¿En qué año fuimos a Isla Mágica y nos pusimos malos? (PREGUNTA VIP)",
+                options: ["A. 2021", "B. 2020", "C. 2023"],
+                correct: 1, // B. 2020
+                hasGift: true,
+                isVip: true,
+                location: "Patio cocina",
+                giftName: "👑 REGALO VIP DORADO"
+            }
+        ];
+
+        // 5 Retos caseros para la ruleta
+        const rouletteChallenges = [
+            "💃 Baila durante 20 segundos con una coreografía inventada y digna de tus 28.",
+            "🎤 Canta a pleno pulmón el estribillo de tu canción favorita delante de todos.",
+            "😂 Cuenta la anécdota más vergonzosa o graciosa que recuerdes de estos años.",
+            "💪 Haz 10 sentadillas diciendo en cada una: ¡Tengo 28 y estoy estupenda!",
+            "📞 Manda un audio de voz de 10 segundos a un grupo felicitándote a ti misma con entusiasmo."
+        ];
+
+        function updateCountdown() {
+            const now = new Date();
+            const diff = TARGET_DATE - now;
+
+            if (diff <= 0 || isUnlocked) {
+                document.getElementById('timerDays').textContent = "00";
+                document.getElementById('timerHours').textContent = "00";
+                document.getElementById('timerMinutes').textContent = "00";
+                document.getElementById('timerSeconds').textContent = "00";
+
+                const btn = document.getElementById('startGameBtn');
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.classList.add('hover:scale-105', 'shadow-amber-500/50');
+                btn.innerHTML = `<i class="fa-solid fa-play mr-2"></i> ¡EMPEZAR EL TRIVIAL DE CARMEN!`;
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('timerDays').textContent = String(days).padStart(2, '0');
+            document.getElementById('timerHours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('timerMinutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('timerSeconds').textContent = String(seconds).padStart(2, '0');
+        }
+
+        // Generate unique 4-digit code
+        function generateRandom4DigitCode() {
+            return String(Math.floor(1000 + Math.random() * 9000));
+        }
+
+        // Web Audio Synthesizer
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSynthBeep(freq = 440, type = 'sine', duration = 0.15) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function toggleAudio() {
+            isMuted = !isMuted;
+            const btn = document.getElementById('audioBtn');
+            btn.innerHTML = isMuted 
+                ? `<i class="fa-solid fa-volume-xmark text-rose-400"></i>`
+                : `<i class="fa-solid fa-volume-high text-amber-300"></i>`;
+        }
+
+        function openEarlyAccessModal() {
+            document.getElementById('earlyAccessModal').classList.remove('hidden');
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinErrorMsg').classList.add('hidden');
+            document.getElementById('pinInput').focus();
+        }
+
+        function closeEarlyAccessModal() {
+            document.getElementById('earlyAccessModal').classList.add('hidden');
+        }
+
+        function verifyEarlyAccessPin() {
+            const inputVal = document.getElementById('pinInput').value.trim();
+            if (inputVal === PIN_ACCESO) {
+                isUnlocked = true;
+                closeEarlyAccessModal();
+                document.getElementById('previewNotice').classList.remove('hidden');
+                updateCountdown();
+                playSynthBeep(880, 'sine', 0.3);
+                confetti({ particleCount: 50, spread: 70, origin: { y: 0.3 } });
+            } else {
+                playSynthBeep(180, 'sawtooth', 0.3);
+                document.getElementById('pinErrorMsg').classList.remove('hidden');
+            }
+        }
+
+        const memorySymbols = ['🎂', '🎁', '👑', '🎉', '🎈', '🍾'];
+        let memoryDeck = [...memorySymbols, ...memorySymbols];
+        let flippedCards = [];
+        let matchedPairs = 0;
+
+        function initMemoryGame() {
+            const board = document.getElementById('memoryBoard');
+            board.innerHTML = '';
+            memoryDeck.sort(() => Math.random() - 0.5);
+            flippedCards = [];
+            matchedPairs = 0;
+
+            memoryDeck.forEach((emoji, index) => {
+                const card = document.createElement('button');
+                card.className = "h-14 sm:h-16 rounded-2xl bg-purple-900/60 border border-purple-600/40 text-2xl flex items-center justify-center transition-all duration-300 hover:border-amber-400";
+                card.dataset.emoji = emoji;
+                card.innerHTML = `<span class="opacity-0 transition duration-300">${emoji}</span>`;
+                card.onclick = () => handleMemoryClick(card);
+                board.appendChild(card);
+            });
+        }
+
+        function handleMemoryClick(card) {
+            if (flippedCards.length >= 2 || card.classList.contains('matched') || flippedCards.includes(card)) return;
+
+            playSynthBeep(520, 'triangle', 0.1);
+            card.querySelector('span').classList.remove('opacity-0');
+            card.classList.add('bg-purple-800', 'border-amber-400');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                const [c1, c2] = flippedCards;
+                if (c1.dataset.emoji === c2.dataset.emoji) {
+                    playSynthBeep(784, 'sine', 0.2);
+                    c1.classList.add('matched', 'border-green-400', 'bg-green-950/50');
+                    c2.classList.add('matched', 'border-green-400', 'bg-green-950/50');
+                    matchedPairs++;
+                    flippedCards = [];
+                    if (matchedPairs === memorySymbols.length) {
+                        confetti({ particleCount: 40, spread: 60 });
+                    }
+                } else {
+                    setTimeout(() => {
+                        c1.querySelector('span').classList.add('opacity-0');
+                        c2.querySelector('span').classList.add('opacity-0');
+                        c1.classList.remove('bg-purple-800', 'border-amber-400');
+                        c2.classList.remove('bg-purple-800', 'border-amber-400');
+                        flippedCards = [];
+                    }, 700);
+                }
+            }
+        }
+
+        function resetMemoryGame() {
+            initMemoryGame();
+        }
+
+        function startQuiz() {
+            document.getElementById('landingScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            currentQIdx = 0;
+            userResponses = [];
+            generatedCodes = {};
+            document.getElementById('codesCount').textContent = '0';
+            renderQuestion();
+            playSynthBeep(600, 'sine', 0.2);
+        }
+
+        function renderQuestion() {
+            const q = questionsList[currentQIdx];
+            document.getElementById('questionNum').textContent = q.number;
+            document.getElementById('questionText').textContent = q.question;
+
+            // Progress bar
+            const percent = ((currentQIdx + 1) / questionsList.length) * 100;
+            document.getElementById('quizProgressBar').style.width = `${percent}%`;
+
+            // Reset Card Styles for VIP
+            const card = document.getElementById('questionCard');
+            const vipBanner = document.getElementById('vipBanner');
+            const qTag = document.getElementById('qTagBadge');
+            const qNumBadge = document.getElementById('qNumBadge');
+
+            if (q.isVip) {
+                vipBanner.classList.remove('hidden');
+                card.classList.add('border-amber-400', 'shadow-amber-500/30', 'bg-gradient-to-b', 'from-amber-950/40', 'to-purple-950/80');
+                qTag.textContent = "⭐ PREGUNTA VIP ⭐";
+                qTag.className = "px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 border border-amber-300";
+                qNumBadge.className = "w-10 h-10 rounded-full bg-amber-400 text-slate-950 border-2 border-amber-300 flex items-center justify-center font-extrabold text-sm shadow-md";
+            } else {
+                vipBanner.classList.add('hidden');
+                card.className = "gold-card-border rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative transition-all duration-300";
+                qTag.textContent = q.hasGift ? "🎁 Pregunta con Regalo" : "Pregunta del Recuerdo";
+                qTag.className = "px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-purple-900 border border-purple-600 text-purple-200";
+                qNumBadge.className = "w-10 h-10 rounded-full bg-pink-500/20 border border-pink-500/50 flex items-center justify-center text-pink-300 font-extrabold text-sm";
+            }
+
+            // Feedback area reset
+            const feedback = document.getElementById('feedbackBox');
+            feedback.className = "hidden p-4 rounded-2xl text-center font-bold text-sm transition-all duration-300";
+
+            // Options buttons
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            q.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full p-4 rounded-2xl border text-left font-semibold transition duration-200 flex justify-between items-center group ${
+                    q.isVip 
+                        ? 'bg-amber-950/30 border-amber-500/40 hover:border-amber-300 hover:bg-amber-900/40 text-amber-100'
+                        : 'bg-purple-900/40 border-purple-700/50 hover:border-amber-400 hover:bg-purple-800/60 text-slate-100'
+                }`;
+                btn.innerHTML = `
+                    <span class="text-sm sm:text-base">${optText}</span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-0 group-hover:opacity-100 text-amber-300 transition"></i>
+                `;
+                btn.onclick = () => selectOption(idx);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIdx) {
+            const q = questionsList[currentQIdx];
+            const feedback = document.getElementById('feedbackBox');
+            const container = document.getElementById('optionsContainer');
+
+            // Disable buttons to prevent double tap
+            Array.from(container.children).forEach(btn => btn.disabled = true);
+
+            const isCorrect = (selectedIdx === q.correct);
+            userResponses.push({ questionIdx: currentQIdx, isCorrect: isCorrect });
+
+            if (isCorrect) {
+                // Correct answer! Generate 4-digit code
+                const randomCode = generateRandom4DigitCode();
+                generatedCodes[currentQIdx] = randomCode;
+
+                playSynthBeep(880, 'sine', 0.25);
+                confetti({ particleCount: 35, spread: 55, origin: { y: 0.6 } });
+
+                const totalCodes = Object.keys(generatedCodes).length;
+                document.getElementById('codesCount').textContent = totalCodes;
+
+                feedback.className = "p-4 rounded-2xl text-center font-bold text-sm bg-green-950/80 border border-green-500 text-green-300 block animate-bounce";
+                feedback.innerHTML = `
+                    🎉 ¡ACIERTO! Código obtenido: <span class="font-mono bg-green-900/90 text-amber-300 px-3 py-1 rounded-xl text-lg font-black tracking-widest border border-green-400">${randomCode}</span>
+                    <p class="text-xs text-green-200/90 mt-1">📝 ¡Apunta este código en tu papel!</p>
+                `;
+            } else {
+                // Wrong answer: No code generated
+                playSynthBeep(220, 'sawtooth', 0.3);
+                feedback.className = "p-4 rounded-2xl text-center font-bold text-sm bg-rose-950/80 border border-rose-500 text-rose-300 block";
+                feedback.innerHTML = `
+                    😅 ¡Oh no, fallaste! La respuesta correcta era la <strong>${q.options[q.correct]}</strong>.<br>
+                    <span class="text-xs text-rose-300/80">No has conseguido código para esta pregunta.</span>
+                `;
+            }
+
+            // Next question after short pause
+            setTimeout(() => {
+                currentQIdx++;
+                if (currentQIdx < questionsList.length) {
+                    renderQuestion();
+                } else {
+                    finishTriviaShowSummary();
+                }
+            }, 2300);
+        }
+
+        function finishTriviaShowSummary() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('summaryScreen').classList.remove('hidden');
+
+            const totalAciertos = Object.keys(generatedCodes).length;
+            document.getElementById('summaryAciertosBadge').textContent = `${totalAciertos}/10 Aciertos`;
+
+            const codesGrid = document.getElementById('summaryCodesGrid');
+            codesGrid.innerHTML = '';
+
+            questionsList.forEach((q, idx) => {
+                const code = generatedCodes[idx];
+                const card = document.createElement('div');
+                
+                if (code) {
+                    card.className = `p-3 rounded-2xl border flex items-center justify-between ${
+                        q.isVip ? 'bg-amber-950/60 border-amber-400 shadow-md' : 'bg-purple-950/60 border-purple-700/60'
+                    }`;
+                    card.innerHTML = `
+                        <div class="text-left">
+                            <span class="text-[10px] uppercase font-bold ${q.isVip ? 'text-amber-300' : 'text-purple-300'}">Pregunta ${q.number} ${q.isVip ? '👑 (VIP)' : ''}</span>
+                            <div class="text-xs text-white font-medium truncate max-w-[170px]">${q.question.substring(3)}</div>
+                        </div>
+                        <div class="font-mono font-black text-lg text-amber-300 bg-black/40 px-3 py-1 rounded-xl border border-amber-400/40">
+                            ${code}
+                        </div>
+                    `;
+                } else {
+                    card.className = "p-3 rounded-2xl border bg-rose-950/20 border-rose-900/40 flex items-center justify-between opacity-70";
+                    card.innerHTML = `
+                        <div class="text-left">
+                            <span class="text-[10px] uppercase font-bold text-rose-400">Pregunta ${q.number}</span>
+                            <div class="text-xs text-rose-200/80 truncate max-w-[170px]">${q.question.substring(3)}</div>
+                        </div>
+                        <div class="text-xs font-bold text-rose-400 italic">
+                            Sin código ❌
+                        </div>
+                    `;
+                }
+                codesGrid.appendChild(card);
+            });
+
+            confetti({ particleCount: 70, spread: 70, origin: { y: 0.4 } });
+        }
+
+        function goToVaultScreen() {
+            document.getElementById('summaryScreen').classList.add('hidden');
+            document.getElementById('vaultScreen').classList.remove('hidden');
+            renderUnlockedGifts();
+            checkAndSetupRoulette();
+            drawRoulette();
+        }
+
+        function renderUnlockedGifts() {
+            const grid = document.getElementById('unlockedGiftsGrid');
+            grid.innerHTML = '';
+
+            const validQuestions = questionsList.filter(q => q.hasGift); // Questions 4, 5, 8, 9, 10
+            let discoveredCount = 0;
+
+            validQuestions.forEach(q => {
+                const isOpened = unlockedGifts.has(q.number);
+                if (isOpened) discoveredCount++;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border transition duration-300 text-left relative overflow-hidden ${
+                    isOpened 
+                        ? 'bg-gradient-to-br from-amber-950/60 to-purple-950/80 border-amber-400 shadow-lg' 
+                        : 'bg-purple-950/40 border-purple-800/40 opacity-70'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                            q.isVip ? 'bg-amber-400 text-slate-950' : 'bg-purple-900 text-purple-200'
+                        }">Pregunta ${q.number} ${q.isVip ? '👑 VIP' : ''}</span>
+                        <span class="text-xs font-bold ${isOpened ? 'text-green-400' : 'text-purple-400'}">
+                            ${isOpened ? '🔓 DESCUBIERTO' : '🔒 BLOQUEADO'}
+                        </span>
+                    </div>
+                    <div class="text-xs font-bold text-white mb-2">${q.giftName}</div>
+                    ${
+                        isOpened 
+                            ? `<div class="p-2.5 rounded-xl bg-amber-400/20 border border-amber-400/50 text-amber-200 text-xs font-black flex items-center gap-2">
+                                <i class="fa-solid fa-location-dot text-amber-400"></i> ${q.location}
+                               </div>`
+                            : `<div class="p-2.5 rounded-xl bg-purple-900/30 border border-purple-700/30 text-purple-400 text-xs italic">
+                                Introduce su código para ver ubicación.
+                               </div>`
+                    }
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('giftsUnlockedBadge').textContent = `${discoveredCount} / 5 Descubiertos`;
+        }
+
+        function testManualCode() {
+            const input = document.getElementById('manualCodeInput');
+            const enteredCode = input.value.trim();
+            const msg = document.getElementById('manualCodeMsg');
+
+            msg.classList.remove('hidden', 'text-green-400', 'text-rose-400', 'text-amber-400');
+
+            if (!enteredCode || enteredCode.length !== 4) {
+                msg.textContent = 'Por favor, introduce un código de 4 cifras.';
+                msg.classList.add('text-rose-400');
+                return;
+            }
+
+            // Find if this code matches any generated code
+            let matchedQIndex = null;
+            for (const [idxStr, code] of Object.entries(generatedCodes)) {
+                if (code === enteredCode) {
+                    matchedQIndex = parseInt(idxStr, 10);
+                    break;
+                }
+            }
+
+            if (matchedQIndex !== null) {
+                const matchedQ = questionsList[matchedQIndex];
+
+                if (matchedQ.hasGift) {
+                    // It is one of questions 4, 5, 8, 9, 10!
+                    unlockedGifts.add(matchedQ.number);
+                    renderUnlockedGifts();
+                    checkAndSetupRoulette();
+
+                    playSynthBeep(1000, 'sine', 0.4);
+                    confetti({ particleCount: 90, spread: 85, origin: { y: 0.5 } });
+
+                    document.getElementById('giftModalIcon').textContent = matchedQ.isVip ? '👑' : '🎁';
+                    document.getElementById('giftModalBadge').textContent = matchedQ.isVip ? '👑 REGALO VIP DORADO' : `🎁 REGALO PREGUNTA ${matchedQ.number}`;
+                    document.getElementById('giftModalTitle').textContent = matchedQ.giftName;
+                    document.getElementById('giftModalLocation').textContent = matchedQ.location;
+                    document.getElementById('giftModalDesc').textContent = matchedQ.isVip 
+                        ? '¡Has desbloqueado el gran regalo estrella de tus 28 años! Ve corriendo al lugar indicado.'
+                        : '¡Felicidades Carmen! El regalo está esperándote en esa ubicación de la casa.';
+                    
+                    document.getElementById('giftModal').classList.remove('hidden');
+
+                    msg.textContent = `¡Código válido! Ubicación descubierta: ${matchedQ.location}`;
+                    msg.classList.add('text-green-400');
+                    input.value = '';
+                } else {
+                    // Valid code from standard questions (1, 2, 3, 6, 7) - no gift
+                    playSynthBeep(240, 'sawtooth', 0.3);
+                    msg.textContent = `❌ Este código corresponde a la Pregunta ${matchedQ.number}. ¡Es un código correcto pero de las preguntas sin regalo! Recuerda que solo 5 tienen premio.`;
+                    msg.classList.add('text-amber-400');
+                }
+            } else {
+                // Not found
+                playSynthBeep(180, 'sawtooth', 0.3);
+                msg.textContent = '❌ Código no reconocido. Asegúrate de escribirlo tal cual lo apuntaste.';
+                msg.classList.add('text-rose-400');
+            }
+        }
+
+        function closeGiftModal() {
+            document.getElementById('giftModal').classList.add('hidden');
+        }
+
+        function checkAndSetupRoulette() {
+            const select = document.getElementById('missingGiftSelect');
+            select.innerHTML = '';
+
+            // Valid key questions: 4, 5, 8, 9, 10
+            const keyQuestions = questionsList.filter(q => q.hasGift);
+            const missing = keyQuestions.filter(q => !unlockedGifts.has(q.number));
+
+            if (missing.length === 0) {
+                // All 5 unlocked!
+                document.getElementById('rouletteSection').innerHTML = `
+                    <div class="py-8 text-center space-y-3">
+                        <div class="text-6xl animate-bounce">🏆</div>
+                        <h3 class="text-3xl font-black text-amber-300">¡ENHORABUENA CARMEN!</h3>
+                        <p class="text-purple-200 max-w-md mx-auto">Has descubierto las 5 ubicaciones de todos tus regalos de cumpleaños. ¡Que disfrutes al máximo tus 28!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            missing.forEach(q => {
+                const opt = document.createElement('option');
+                opt.value = q.number;
+                opt.textContent = `Pregunta ${q.number}: ${q.giftName} ${q.isVip ? '👑' : ''}`;
+                select.appendChild(opt);
+            });
+        }
+
+        // Draw Canvas Roulette Wheel
+        let currentAngle = 0;
+        let isSpinning = false;
+
+        function drawRoulette() {
+            const canvas = document.getElementById('rouletteWheel');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const numSectors = rouletteChallenges.length;
+            const arc = (2 * Math.PI) / numSectors;
+            const colors = ['#ec4899', '#8b5cf6', '#f59e0b', '#06b6d4', '#10b981'];
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = centerX - 10;
+
+            for (let i = 0; i < numSectors; i++) {
+                const angle = currentAngle + i * arc;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc);
+                ctx.lineTo(centerX, centerY);
+                ctx.fill();
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Text
+                ctx.save();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Montserrat';
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc / 2);
+                ctx.textAlign = 'right';
+                ctx.fillText(`Reto #${i + 1}`, radius - 20, 4);
+                ctx.restore();
+            }
+
+            // Center circle pin
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 22, 0, 2 * Math.PI);
+            ctx.fillStyle = '#18092b';
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#facc15';
+            ctx.stroke();
+
+            ctx.fillStyle = '#facc15';
+            ctx.font = 'bold 14px Montserrat';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('28', centerX, centerY);
+        }
+
+        function spinRoulette() {
+            if (isSpinning) return;
+            isSpinning = true;
+
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = true;
+            spinBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            document.getElementById('challengeResultBox').classList.add('hidden');
+
+            const select = document.getElementById('missingGiftSelect');
+            activeChallengeQuestion = parseInt(select.value, 10);
+
+            let spins = Math.floor(Math.random() * 5) + 6; // 6 to 10 full spins
+            let extraAngle = Math.random() * 2 * Math.PI;
+            let targetAngle = currentAngle + spins * 2 * Math.PI + extraAngle;
+            let duration = 3500;
+            let start = null;
+
+            function animateRoulette(timestamp) {
+                if (!start) start = timestamp;
+                let elapsed = timestamp - start;
+                let progress = Math.min(elapsed / duration, 1);
+                
+                // Ease out cubic
+                let easeOut = 1 - Math.pow(1 - progress, 3);
+                currentAngle = currentAngle + (targetAngle - currentAngle) * (easeOut * 0.1);
+                drawRoulette();
+
+                if (progress < 1) {
+                    playSynthBeep(350 + Math.random() * 200, 'triangle', 0.04);
+                    requestAnimationFrame(animateRoulette);
+                } else {
+                    currentAngle = targetAngle % (2 * Math.PI);
+                    drawRoulette();
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    spinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                    // Calculate selected challenge
+                    const numSectors = rouletteChallenges.length;
+                    const arc = (2 * Math.PI) / numSectors;
+                    
+                    // The pointer is at the top (angle 3*PI/2)
+                    let normalizedAngle = (1.5 * Math.PI - (currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+                    let selectedIdx = Math.floor(normalizedAngle / arc) % numSectors;
+
+                    const challenge = rouletteChallenges[selectedIdx];
+                    showChallengeModal(challenge);
+                }
+            }
+
+            requestAnimationFrame(animateRoulette);
+        }
+
+        function showChallengeModal(challenge) {
+            playSynthBeep(880, 'sine', 0.3);
+            const box = document.getElementById('challengeResultBox');
+            document.getElementById('challengeResultText').textContent = challenge;
+            box.classList.remove('hidden');
+        }
+
+        function claimChallengeCode() {
+            if (!activeChallengeQuestion) return;
+
+            // Generate or fetch code for this missing question
+            let qIdx = activeChallengeQuestion - 1;
+            let code = generatedCodes[qIdx];
+            if (!code) {
+                code = generateRandom4DigitCode();
+                generatedCodes[qIdx] = code;
+            }
+
+            document.getElementById('challengeResultBox').classList.add('hidden');
+            document.getElementById('manualCodeInput').value = code;
+            
+            // Trigger manual code test automatically
+            testManualCode();
+        }
+
+        function restartEntireGame() {
+            document.getElementById('vaultScreen').classList.add('hidden');
+            document.getElementById('summaryScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('landingScreen').classList.remove('hidden');
+            unlockedGifts.clear();
+            generatedCodes = {};
+            userResponses = [];
+        }
+
+        function createBalloons() {
+            const container = document.getElementById('balloonContainer');
+            const colors = ['#facc15', '#ff2a85', '#7e22ce', '#38bdf8', '#4ade80'];
+            
+            for (let i = 0; i < 14; i++) {
+                const balloon = document.createElement('div');
+                balloon.className = 'balloon';
+                const size = Math.floor(Math.random() * 26) + 32;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                balloon.style.left = `${Math.random() * 92}%`;
+                balloon.style.width = `${size}px`;
+                balloon.style.height = `${size * 1.25}px`;
+                balloon.style.backgroundColor = color;
+                balloon.style.borderRadius = '50% 50% 50% 50% / 40% 40% 60% 60%';
+                balloon.style.animationDuration = `${12 + Math.random() * 10}s`;
+                balloon.style.animationDelay = `${Math.random() * 5}s`;
+                balloon.style.boxShadow = `inset -5px -5px 10px rgba(0,0,0,0.35), 0 0 16px ${color}66`;
+
+                container.appendChild(balloon);
+            }
+        }
+
+        window.onload = function() {
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+            initMemoryGame();
+            createBalloons();
+        };
+    </script>
+</body>
+</html>
